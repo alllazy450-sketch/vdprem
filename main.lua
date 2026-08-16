@@ -24,18 +24,18 @@ local PlayerGui=LocalPlayer:WaitForChild("PlayerGui")
 local TargetGui = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or PlayerGui or CoreGui
 
 -- ============================================================
---  W424HUB UI (No Key System)
+--  W424HUB UI (Wind UI)
 -- ============================================================
-local Rayfield
+local Wind
 local _src
-local _ok = pcall(function() _src = game:HttpGet('https://sirius.menu/rayfield') end)
-if not _ok or not _src or _src == "" then warn("Rayfield fetch failed!") return end
+local _ok = pcall(function() _src = game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/source.lua") end)
+if not _ok or not _src or _src == "" then warn("Wind fetch failed!") return end
 local _fn, _err = loadstring(_src)
-if not _fn then warn("Rayfield loadstring: ".._err) return end
-local _ok2 = pcall(function() Rayfield = _fn() end)
-if not _ok2 or not Rayfield then warn("Rayfield init failed!") return end
-local W424hub = Rayfield
-print("OK W424hub loaded")
+if not _fn then warn("Wind loadstring: ".._err) return end
+local _ok2 = pcall(function() Wind = _fn() end)
+if not _ok2 or not Wind then warn("Wind init failed!") return end
+local W424hub = Wind
+print("OK Wind UI loaded")
 
 -- ============================================================
 --  GLOBAL VARIABLES
@@ -382,34 +382,27 @@ end
 -- ============================================================
 --  UI WINDOW
 -- ============================================================
-local Window = Rayfield:CreateWindow({
-   Name = "W424HUB",
-   LoadingTitle = "W424HUB",
-   LoadingSubtitle = "Loading...",
-   Theme = "Ocean",
-   DisableRayfieldPrompts = true,
-   DisableBuildWarnings = true,
-})
+local Window = Wind.new("W424HUB", "DBD Mobile Script")
 
-local TabInfo     = Window:CreateTab("Info")
-local TabAuto     = Window:CreateTab("Auto")
-local Tab4        = Window:CreateTab("Generator")
-local Tab1        = Window:CreateTab("Survivor")
-local TabKiller   = Window:CreateTab("Killer")
-local Tab3        = Window:CreateTab("Combat")
-local Tab2        = Window:CreateTab("Visuals")
-local TabSettings = Window:CreateTab("Settings")
+local TabInfo     = Window:AddTab("Info")
+local TabAuto     = Window:AddTab("Auto")
+local Tab4        = Window:AddTab("Generator")
+local Tab1        = Window:AddTab("Survivor")
+local TabKiller   = Window:AddTab("Killer")
+local Tab3        = Window:AddTab("Combat")
+local Tab2        = Window:AddTab("Visuals")
+local TabSettings = Window:AddTab("Settings")
 
 -- ===== TAB INFO =====
 local SecNotice = TabInfo
-TabInfo:CreateSection("Informasi & Rules")
-SecNotice:CreateParagraph({Title="⚠️ DILARANG DIPERJUALBELIKAN!", Content=""})
+TabInfo:AddSection("Informasi & Rules")
+-- Paragraph: ⚠️ DILARANG DIPERJUALBELIKAN! - 
 local SecCommunity = TabInfo
-TabInfo:CreateSection("Komunitas & Support")
-SecCommunity:CreateParagraph({Title="Official Discord Community", Content=""})
-SecCommunity:CreateButton({Name="Copy Discord Link", Callback=function()
+TabInfo:AddSection("Komunitas & Support")
+-- Paragraph: Official Discord Community - 
+SecCommunity:AddButton({Title="Copy Discord Link", Callback=function()
         local success = pcall(function() setclipboard("https://discord.gg/yGnU2sSWr") end})
-        Rayfield:Notify({
+        Wind:Notify({
             Title = success and "Success" or "Clipboard Failed",
             Content = success and "Link Discord berhasil disalin: https://discord.gg/yGnU2sSWr" or "Executor tidak support clipboard.",
             Icon = success and "Check" or "X",
@@ -419,33 +412,31 @@ SecCommunity:CreateButton({Name="Copy Discord Link", Callback=function()
 
 -- ===== TAB AUTO =====
 local MoonSection = TabAuto
-TabAuto:CreateSection("MoonWalk System")
-MoonSection:CreateToggle({Name="Moonwalk", CurrentValue=false, Flag="Toggle1", Callback=function(v)
+TabAuto:AddSection("MoonWalk System")
+MoonSection:AddToggle("Toggle1", {Title="Moonwalk", Default=false, Callback=function(v)
         getgenv().MoonwalkEnabled = v
         if MoonwalkUI then MoonwalkUI.Enabled = v end
         if not v and cachedHum then cachedHum.AutoRotate = true end
-        Rayfield:Notify({
+        Wind:Notify({
             Title = v and "Moonwalk Enabled" or "Moonwalk Disabled",
             Content = v and "Tekan tombol/R untuk mulai zigzag." or "Moonwalk dimatikan.",
             Icon = v and "RefreshCw" or "CircleOff",
             Duration = 3)
-    end
-})
-MoonSection:CreateSlider({Name="MoonWalk Intensity", Range={5,50}, CurrentValue=11, Flag="Slider1", Callback=function(v) getgenv().MoonwalkZigzagSpeed = v end})
-MoonSection:CreateSlider({Name="Speed Boost MoonWalk", Range={1,1}, CurrentValue=1, Flag="Slider8", Callback=function(v) getgenv().MoonwalkBoostPower = v end})
+    end})
+MoonSection:AddSlider("Slider1", {Title="MoonWalk Intensity", Min=5, Max=50, Default=11, Callback=function(v) getgenv().MoonwalkZigzagSpeed = v end})
+MoonSection:AddSlider("Slider8", {Title="Speed Boost MoonWalk", Min=1, Max=1, Default=1, Callback=function(v) getgenv().MoonwalkBoostPower = v end})
 
 local DefenseSection = TabAuto
-TabAuto:CreateSection("Auto Defense & Parry")
-DefenseSection:CreateToggle({Name="Enable Auto Parry", CurrentValue=false, Flag="Toggle2", Callback=function(v)
+TabAuto:AddSection("Auto Defense & Parry")
+DefenseSection:AddToggle("Toggle2", {Title="Enable Auto Parry", Default=false, Callback=function(v)
         AutoParry = v
         UpdateParryRing()
-        Rayfield:Notify({
+        Wind:Notify({
             Title = "Auto Parry",
             Content = v and "Enabled (Anti-Lag Ping Active)" or "Disabled",
             Icon = "Shield",
             Duration = 3)
-    end
-})
+    end})
 DefenseSection:CreateInput({
     Name = "Parry Range (studs)",
     Placeholder = "12",
@@ -459,11 +450,11 @@ DefenseSection:CreateInput({
         end
     end
 })
-DefenseSection:CreateToggle({Name="Remove Parry Circle", CurrentValue=false, Flag="Toggle31", Callback=function(v)
+DefenseSection:AddToggle("Toggle31", {Title="Remove Parry Circle", Default=false, Callback=function(v)
         RemoveParryCircle = v
         UpdateParryRing()
     end})
-DefenseSection:CreateToggle({Name="Remove Warning Mark", CurrentValue=false, Flag="Toggle3", Callback=function(v)
+DefenseSection:AddToggle("Toggle3", {Title="Remove Warning Mark", Default=false, Callback=function(v)
         RemoveWarningMark = v
         local char = LocalPlayer.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
@@ -474,28 +465,27 @@ DefenseSection:CreateToggle({Name="Remove Warning Mark", CurrentValue=false, Fla
     end})
 
 local SurAutoSection = TabAuto
-TabAuto:CreateSection("Auto Heal & Recovery")
-SurAutoSection:CreateToggle({Name="Self Heal", CurrentValue=false, Flag="Toggle4", Callback=function(v)
+TabAuto:AddSection("Auto Heal & Recovery")
+SurAutoSection:AddToggle("Toggle4", {Title="Self Heal", Default=false, Callback=function(v)
         SelfHeal = v
-        Rayfield:Notify({
+        Wind:Notify({
             Title = v and "Self Heal Enabled" or "Self Heal Disabled",
             Content = v and "Heal remote diarahkan ke diri sendiri." or "Self Heal dimatikan.",
             Icon = v and "Heart" or "CircleOff",
             Duration = 3)
-    end
-})
+    end})
 
 -- ===== TAB GENERATOR =====
 local GenSec = Tab4
-Tab4:CreateSection("Generator Automation")
-GenSec:CreateToggle({Name="Auto Generator", CurrentValue=false, Flag="Toggle31", Callback=function(v)
+Tab4:AddSection("Generator Automation")
+GenSec:AddToggle("Toggle31", {Title="Auto Generator", Default=false, Callback=function(v)
         AutoGenerator = v
         if not v then
             for _,con in pairs(HeartbeatConnections or {}) do pcall(function() con:Disconnect() end) end
             if HeartbeatConnections then table.clear(HeartbeatConnections) end
         end
     end})
-GenSec:CreateDropdown({Name="SkillCheck Mode", Options={"Perfect", "Neutral"}, CurrentOption={"Perfect"}, Flag="Dropdown1", Callback=function(option)
+GenSec:AddDropdown("Dropdown1", {Title="SkillCheck Mode", Values={"Perfect", "Neutral"}, Default="Perfect", Callback=function(option)
         AutoGeneratorMode = option
         if option == "Perfect" then
             getgenv().GeneratorPerfectOffsetStart = 102
@@ -508,58 +498,57 @@ GenSec:CreateDropdown({Name="SkillCheck Mode", Options={"Perfect", "Neutral"}, C
 
 -- ===== TAB SURVIVOR =====
 local MoveSec = Tab1
-Tab1:CreateSection("Movement Modification")
-MoveSec:CreateToggle({Name="Speed Boost", CurrentValue=false, Flag="Toggle5", Callback=function(v) SpeedBoost = v end})
-MoveSec:CreateSlider({Name="Speed Boost Power", Range={0,150}, CurrentValue=8, Flag="Slider2", Callback=function(v) BoostSpeed = tonumber(v) or 0 end})
+Tab1:AddSection("Movement Modification")
+MoveSec:AddToggle("Toggle5", {Title="Speed Boost", Default=false, Callback=function(v) SpeedBoost = v end})
+MoveSec:AddSlider("Slider2", {Title="Speed Boost Power", Min=0, Max=150, Default=8, Callback=function(v) BoostSpeed = tonumber(v) or 0 end})
 
 local MoreSec = Tab1
-Tab1:CreateSection("Survivor Utilities")
-MoreSec:CreateToggle({Name="Silent Actions (Anti-Noise)", CurrentValue=false, Flag="Toggle6", Callback=function(v) SilentActions = v end})
-MoreSec:CreateToggle({Name="Anti Fall Slow", CurrentValue=false, Flag="Toggle7", Callback=function(v) AntiFallDamage = v end})
-MoreSec:CreateToggle({Name="Anti Aura (No Detect)", CurrentValue=false, Flag="Toggle8", Callback=function(v) getgenv().AntiAura = v end})
-MoreSec:CreateToggle({Name="Notify Killer Stun", CurrentValue=false, Flag="Toggle9", Callback=function(v) NotifyStun = v end})
-MoreSec:CreateButton({Name="Force Reset State (Anti-Stuck)", Callback=function() TriggerAntiStuck() end})
+Tab1:AddSection("Survivor Utilities")
+MoreSec:AddToggle("Toggle6", {Title="Silent Actions (Anti-Noise)", Default=false, Callback=function(v) SilentActions = v end})
+MoreSec:AddToggle("Toggle7", {Title="Anti Fall Slow", Default=false, Callback=function(v) AntiFallDamage = v end})
+MoreSec:AddToggle("Toggle8", {Title="Anti Aura (No Detect)", Default=false, Callback=function(v) getgenv().AntiAura = v end})
+MoreSec:AddToggle("Toggle9", {Title="Notify Killer Stun", Default=false, Callback=function(v) NotifyStun = v end})
+MoreSec:AddButton({Title="Force Reset State (Anti-Stuck)", Callback=function() TriggerAntiStuck() end})
 MoreSec:CreateKeybind({ Name = "Anti-Stuck Hotkey (PC Only)", Desc = "Pilih tombol keyboard untuk memicu Anti-Stuck secara instan.", Default = Enum.KeyCode.L, Callback = function() TriggerAntiStuck() end })
 
 -- ===== TAB KILLER =====
 local KAdvSec = TabKiller
-TabKiller:CreateSection("Killer Advantages")
-KAdvSec:CreateToggle({Name="Double Damage Generator", CurrentValue=false, Flag="Toggle10", Callback=function(v) DoubleDamageGen = v end})
-KAdvSec:CreateButton({Name="Activate Killer Power", Callback=function()
+TabKiller:AddSection("Killer Advantages")
+KAdvSec:AddToggle("Toggle10", {Title="Double Damage Generator", Default=false, Callback=function(v) DoubleDamageGen = v end})
+KAdvSec:AddButton({Title="Activate Killer Power", Callback=function()
     pcall(function() ReplicatedStorage.Remotes.Killers.Killer.ActivatePower:FireServer() end})
 end})
 
 local KAttackSec = TabKiller
-TabKiller:CreateSection("Auto Attack System")
-KAttackSec:CreateToggle({Name="Enable Auto Attack", CurrentValue=false, Flag="Toggle11", Callback=function(v) AutoAttack = v end})
-KAttackSec:CreateSlider({Name="Attack Range (Studs)", Range={5,25}, CurrentValue=10, Flag="Slider3", Callback=function(v) AttackRange = tonumber(v) or 10 end})
+TabKiller:AddSection("Auto Attack System")
+KAttackSec:AddToggle("Toggle11", {Title="Enable Auto Attack", Default=false, Callback=function(v) AutoAttack = v end})
+KAttackSec:AddSlider("Slider3", {Title="Attack Range (Studs)", Min=5, Max=25, Default=10, Callback=function(v) AttackRange = tonumber(v) or 10 end})
 
 -- ===== TAB COMBAT =====
 local AimSec = Tab3
-Tab3:CreateSection("Targeting System")
-AimSec:CreateToggle({Name="Aimbot", CurrentValue=false, Flag="Toggle12", Callback=function(v) Aimbot = v; if not v then CachedTarget = nil end end})
-AimSec:CreateToggle({Name="Silent Aim Pistol", CurrentValue=false, Flag="Toggle13", Callback=function(v)
+Tab3:AddSection("Targeting System")
+AimSec:AddToggle("Toggle12", {Title="Aimbot", Default=false, Callback=function(v) Aimbot = v; if not v then CachedTarget = nil end end})
+AimSec:AddToggle("Toggle13", {Title="Silent Aim Pistol", Default=false, Callback=function(v)
         SilentAimPistol = v
         if not v then SilentTarget = nil; ResetScope() end
-        Rayfield:Notify({
+        Wind:Notify({
             Title = v and "Silent Aim Enabled" or "Silent Aim Disabled",
             Content = v and "Auto lock aktif." or "Silent Aim dimatikan.",
             Icon = v and "Crosshair" or "CircleOff",
             Duration = 3)
-    end
-})
-AimSec:CreateDropdown({Name="Aimbot Target", Options={"Head", "Torso", "Body (RootPart)"}, CurrentOption={"Torso"}, Flag="Dropdown2", Callback=function(v) getgenv().AimbotPart = v end})
-AimSec:CreateDropdown({Name="Aimbot Trigger", Options={"Hold to Lock", "Auto Lock (Always)"}, CurrentOption={"Hold to Lock"}, Flag="Dropdown4", Callback=function(v) getgenv().AimbotTrigger = v end})
-AimSec:CreateSlider({Name="Aim Radius", Range={30,150}, CurrentValue=55, Flag="Slider4", Callback=function(v)
+    end})
+AimSec:AddDropdown("Dropdown2", {Title="Aimbot Target", Values={"Head", "Torso", "Body (RootPart)"}, Default="Torso", Callback=function(v) getgenv().AimbotPart = v end})
+AimSec:AddDropdown("Dropdown4", {Title="Aimbot Trigger", Values={"Hold to Lock", "Auto Lock (Always)"}, Default="Hold to Lock", Callback=function(v) getgenv().AimbotTrigger = v end})
+AimSec:AddSlider("Slider4", {Title="Aim Radius", Min=30, Max=150, Default=55, Callback=function(v)
         local val = tonumber(v) or 55
         AimRadius = val
         if FOVCircle then FOVCircle.Size = UDim2.new(0, val*2, 0, val*2) end
     end})
-AimSec:CreateToggle({Name="Show Aim Radius", CurrentValue=false, Flag="Toggle14", Callback=function(v) ShowFOVCircle = v; if FOVCircle then FOVCircle.Visible = v end end})
+AimSec:AddToggle("Toggle14", {Title="Show Aim Radius", Default=false, Callback=function(v) ShowFOVCircle = v; if FOVCircle then FOVCircle.Visible = v end end})
 
 local HitboxSec = Tab3
-Tab3:CreateSection("Hitbox Expander")
-HitboxSec:CreateToggle({Name="Killer Hitbox", CurrentValue=false, Flag="Toggle15", Callback=function(v)
+Tab3:AddSection("Hitbox Expander")
+HitboxSec:AddToggle("Toggle15", {Title="Killer Hitbox", Default=false, Callback=function(v)
         HitboxExpander = v
         if not v then
             for _,p in ipairs(Players:GetPlayers()) do
@@ -570,14 +559,14 @@ HitboxSec:CreateToggle({Name="Killer Hitbox", CurrentValue=false, Flag="Toggle15
             end
         end
     end})
-HitboxSec:CreateSlider({Name="Hitbox Size", Range={2,50}, CurrentValue=15, Flag="Slider5", Callback=function(v) HitboxSize = tonumber(v) or 15 end})
+HitboxSec:AddSlider("Slider5", {Title="Hitbox Size", Min=2, Max=50, Default=15, Callback=function(v) HitboxSize = tonumber(v) or 15 end})
 
 -- ===== TAB VISUALS =====
 local CameraSection = Tab2
-Tab2:CreateSection("Camera Settings")
-CameraSection:CreateToggle({Name="Custom FOV", CurrentValue=false, Flag="Toggle16", Callback=function(v) CustomCameraFOV = v end})
-CameraSection:CreateSlider({Name="Field Of View", Range={70,120}, CurrentValue=100, Flag="Slider6", Callback=function(v) CameraFOVValue = tonumber(v) or 100 end})
-CameraSection:CreateToggle({Name="FPP / TPP Mode", CurrentValue=false, Flag="Toggle17", Callback=function(v)
+Tab2:AddSection("Camera Settings")
+CameraSection:AddToggle("Toggle16", {Title="Custom FOV", Default=false, Callback=function(v) CustomCameraFOV = v end})
+CameraSection:AddSlider("Slider6", {Title="Field Of View", Min=70, Max=120, Default=100, Callback=function(v) CameraFOVValue = tonumber(v) or 100 end})
+CameraSection:AddToggle("Toggle17", {Title="FPP / TPP Mode", Default=false, Callback=function(v)
         local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
         if isMobile then
             if MobileRotateBtn then
@@ -596,34 +585,34 @@ CameraSection:CreateToggle({Name="FPP / TPP Mode", CurrentValue=false, Flag="Tog
     end})
 
 local CrosshairSection = Tab2
-Tab2:CreateSection("Crosshair Customization")
-CrosshairSection:CreateToggle({Name="Crosshair", CurrentValue=false, Flag="Toggle18", Callback=function(v) local gui = getgenv().CrosshairGui; if gui then gui.Enabled = v end end})
-CrosshairSection:CreateDropdown({Name="Crosshair Style", Options={"Dot", "Scope", "Circle", "Plus", "Cross"}, CurrentOption={"Dot"}, Flag="Dropdown3", Callback=function(v) local gui = getgenv().CrosshairGui; if gui and gui:FindFirstChild("Crosshair") then gui.Crosshair.Image = CrosshairImages[v] end end})
-CrosshairSection:CreateSlider({Name="Crosshair Size", Range={10,80}, CurrentValue=28, Flag="Slider7", Callback=function(v)
+Tab2:AddSection("Crosshair Customization")
+CrosshairSection:AddToggle("Toggle18", {Title="Crosshair", Default=false, Callback=function(v) local gui = getgenv().CrosshairGui; if gui then gui.Enabled = v end end})
+CrosshairSection:AddDropdown("Dropdown3", {Title="Crosshair Style", Values={"Dot", "Scope", "Circle", "Plus", "Cross"}, Default="Dot", Callback=function(v) local gui = getgenv().CrosshairGui; if gui and gui:FindFirstChild("Crosshair") then gui.Crosshair.Image = CrosshairImages[v] end end})
+CrosshairSection:AddSlider("Slider7", {Title="Crosshair Size", Min=10, Max=80, Default=28, Callback=function(v)
         local size = tonumber(v) or 28
         local gui = getgenv().CrosshairGui
         if gui and gui:FindFirstChild("Crosshair") then gui.Crosshair.Size = UDim2.new(0, size, 0, size) end
     end})
 
 local VisSec = Tab2
-Tab2:CreateSection("Player & Entity Visuals")
-VisSec:CreateToggle({Name="Enable ESP", CurrentValue=false, Flag="Toggle19", Callback=function(v) ESP_Enable = v; RefreshESP() end})
-VisSec:CreateToggle({Name="ESP Survivor (Name)", CurrentValue=true, Flag="Toggle20", Callback=function(v) ESP_Survivor_Name = v; RefreshESP() end})
-VisSec:CreateToggle({Name="ESP Survivor (Highlight)", CurrentValue=true, Flag="Toggle21", Callback=function(v) ESP_Survivor_Highlight = v; RefreshESP() end})
-VisSec:CreateToggle({Name="ESP Killer (Name)", CurrentValue=true, Flag="Toggle22", Callback=function(v) ESP_Killer_Name = v; RefreshESP() end})
-VisSec:CreateToggle({Name="ESP Killer (Highlight)", CurrentValue=true, Flag="Toggle23", Callback=function(v) ESP_Killer_Highlight = v; RefreshESP() end})
-VisSec:CreateToggle({Name="ESP SCP/Zombie", CurrentValue=true, Flag="Toggle24", Callback=function(v) ESP_SCP = v end})
+Tab2:AddSection("Player & Entity Visuals")
+VisSec:AddToggle("Toggle19", {Title="Enable ESP", Default=false, Callback=function(v) ESP_Enable = v; RefreshESP() end})
+VisSec:AddToggle("Toggle20", {Title="ESP Survivor (Name)", Default=true, Callback=function(v) ESP_Survivor_Name = v; RefreshESP() end})
+VisSec:AddToggle("Toggle21", {Title="ESP Survivor (Highlight)", Default=true, Callback=function(v) ESP_Survivor_Highlight = v; RefreshESP() end})
+VisSec:AddToggle("Toggle22", {Title="ESP Killer (Name)", Default=true, Callback=function(v) ESP_Killer_Name = v; RefreshESP() end})
+VisSec:AddToggle("Toggle23", {Title="ESP Killer (Highlight)", Default=true, Callback=function(v) ESP_Killer_Highlight = v; RefreshESP() end})
+VisSec:AddToggle("Toggle24", {Title="ESP SCP/Zombie", Default=true, Callback=function(v) ESP_SCP = v end})
 
 local ObjVisSec = Tab2
-Tab2:CreateSection("Object Visuals")
-ObjVisSec:CreateToggle({Name="ESP Generator", CurrentValue=true, Flag="Toggle25", Callback=function(v) ESP_Generator = v; RefreshESP() end})
-ObjVisSec:CreateToggle({Name="ESP Pallet", CurrentValue=true, Flag="Toggle26", Callback=function(v) ESP_Pallet = v; RefreshESP() end})
-ObjVisSec:CreateToggle({Name="ESP Exit Gate", CurrentValue=true, Flag="Toggle27", Callback=function(v) ESP_Gate = v; RefreshESP() end})
-ObjVisSec:CreateToggle({Name="ESP Hook", CurrentValue=true, Flag="Toggle28", Callback=function(v) ESP_Hook = v; RefreshESP() end})
+Tab2:AddSection("Object Visuals")
+ObjVisSec:AddToggle("Toggle25", {Title="ESP Generator", Default=true, Callback=function(v) ESP_Generator = v; RefreshESP() end})
+ObjVisSec:AddToggle("Toggle26", {Title="ESP Pallet", Default=true, Callback=function(v) ESP_Pallet = v; RefreshESP() end})
+ObjVisSec:AddToggle("Toggle27", {Title="ESP Exit Gate", Default=true, Callback=function(v) ESP_Gate = v; RefreshESP() end})
+ObjVisSec:AddToggle("Toggle28", {Title="ESP Hook", Default=true, Callback=function(v) ESP_Hook = v; RefreshESP() end})
 
 local OptSec = Tab2
-Tab2:CreateSection("World Optimization")
-OptSec:CreateToggle({Name="Remove All Visual Effects", CurrentValue=false, Flag="Toggle29", Callback=function(v)
+Tab2:AddSection("World Optimization")
+OptSec:AddToggle("Toggle29", {Title="Remove All Visual Effects", Default=false, Callback=function(v)
         if v then
             getgenv().QUANTUM_HiddenEffects = getgenv().QUANTUM_HiddenEffects or {}
             table.clear(getgenv().QUANTUM_HiddenEffects)
@@ -651,7 +640,7 @@ OptSec:CreateToggle({Name="Remove All Visual Effects", CurrentValue=false, Flag=
             getgenv().QUANTUM_OldFogEnd = Lighting.FogEnd
             Lighting.FogStart = 9e9
             Lighting.FogEnd = 9e9
-            Rayfield:Notify({ Title = "Vision Cleared", Content = "Semua filter layar dan kabut berhasil disembunyikan!", Icon = "EyeOff", Duration = 3 })
+            Wind:Notify({ Title = "Vision Cleared", Content = "Semua filter layar dan kabut berhasil disembunyikan!", Icon = "EyeOff", Duration = 3 })
         else
             if getgenv().QUANTUM_HiddenEffects then
                 for _, data in ipairs(getgenv().QUANTUM_HiddenEffects) do
@@ -666,11 +655,11 @@ OptSec:CreateToggle({Name="Remove All Visual Effects", CurrentValue=false, Flag=
                 Lighting.FogStart = getgenv().QUANTUM_OldFogStart
                 Lighting.FogEnd = getgenv().QUANTUM_OldFogEnd
             end
-            Rayfield:Notify({ Title = "Vision Restored", Content = "Efek visual bawaan game dikembalikan.", Icon = "Eye", Duration = 3 })
+            Wind:Notify({ Title = "Vision Restored", Content = "Efek visual bawaan game dikembalikan.", Icon = "Eye", Duration = 3 })
         end
     end
 })
-OptSec:CreateButton({Name="Force Fullbright", Callback=function()
+OptSec:AddButton({Title="Force Fullbright", Callback=function()
         Lighting.Ambient = Color3.fromRGB(170, 170, 170)
         Lighting.OutdoorAmbient = Color3.fromRGB(170, 170, 170)
         Lighting.ColorShift_Bottom = Color3.new(0, 0, 0)
@@ -685,8 +674,8 @@ OptSec:CreateButton({Name="Force Fullbright", Callback=function()
             elseif effect:IsA("PostEffect") or effect:IsA("Clouds") then pcall(function() effect.Enabled = false end}) end
         end
     end)
-OptSec:CreateButton({Name="Potato Mode", Callback=function()
-        Rayfield:Notify({ Title = "Potato Mode", Content = "Mengoptimalkan map untuk HP kentang...", Icon = "Cpu", Duration = 3 })
+OptSec:AddButton({Title="Potato Mode", Callback=function()
+        Wind:Notify({ Title = "Potato Mode", Content = "Mengoptimalkan map untuk HP kentang...", Icon = "Cpu", Duration = 3})
         task.spawn(function()
             Lighting.GlobalShadows = false
             Lighting.ShadowSoftness = 0
@@ -719,18 +708,18 @@ OptSec:CreateButton({Name="Potato Mode", Callback=function()
                 end
                 if i % 300 == 0 then task.wait() end
             end
-            Rayfield:Notify({ Title = "Optimization Complete!", Content = "Potato Mode berhasil diterapkan. Tekstur dihapus, FPS Boosted!", Icon = "Check", Duration = 3 })
+            Wind:Notify({ Title = "Optimization Complete!", Content = "Potato Mode berhasil diterapkan. Tekstur dihapus, FPS Boosted!", Icon = "Check", Duration = 3 })
         end)
     end)
 
 -- ===== TAB SETTINGS =====
 local SecProtect = TabSettings
-TabSettings:CreateSection("Security & Protection")
-SecProtect:CreateToggle({Name="Anti-Logger (Bypass Anti-Cheat)", CurrentValue=true, Flag="Toggle30", Callback=function(v) AntiLogger = v end})
+TabSettings:AddSection("Security & Protection")
+SecProtect:AddToggle("Toggle30", {Title="Anti-Logger (Bypass Anti-Cheat)", Default=true, Callback=function(v) AntiLogger = v end})
 
 local InterfaceSec = TabSettings
-TabSettings:CreateSection("Window & Interface")
-InterfaceSec:CreateButton({Name="Unload W424hub HUB", Callback=function()
+TabSettings:AddSection("Window & Interface")
+InterfaceSec:AddButton({Title="Unload W424hub HUB", Callback=function()
         getgenv().QUANTUM_RUNNING = false
         pcall(function() if MainWindowScreen then MainWindowScreen:Destroy() end end})
         pcall(function() RunService:UnbindFromRenderStep("SmoothFOV") end)
@@ -2483,7 +2472,7 @@ end))
 -- ============================================================
 --  FINAL
 -- ============================================================
-Rayfield:Notify({
+Wind:Notify({
     Title = "Welcome to W424hub HUB!",
     Content = "God-AI Systems Initialized.\n💻 PC User: Press [Keybind K] to open/hide the UI.",
     Duration = 8,
