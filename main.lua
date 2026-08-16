@@ -26,50 +26,16 @@ local TargetGui = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") o
 -- ============================================================
 --  W424HUB UI (No Key System)
 -- ============================================================
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-if not Rayfield then warn("Rayfield failed!") return end
+local Rayfield
+local _src
+local _ok = pcall(function() _src = game:HttpGet('https://sirius.menu/rayfield') end)
+if not _ok or not _src or _src == "" then warn("Rayfield fetch failed!") return end
+local _fn, _err = loadstring(_src)
+if not _fn then warn("Rayfield loadstring: ".._err) return end
+local _ok2 = pcall(function() Rayfield = _fn() end)
+if not _ok2 or not Rayfield then warn("Rayfield init failed!") return end
 local W424hub = Rayfield
-if not W424hub then
-    warn("❌ W424hub UI gagal load! Pakai fallback...")
-    -- Fallback UI sederhana
-    local sg = Instance.new("ScreenGui")
-    sg.Name = "W424hub_Fallback"
-    sg.ResetOnSpawn = false
-    sg.Parent = CoreGui
-    local f = Instance.new("Frame", sg)
-    f.Size = UDim2.new(0, 300, 0, 200)
-    f.Position = UDim2.new(0.5, -150, 0.5, -100)
-    f.BackgroundColor3 = Color3.fromRGB(20, 25, 35)
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 12)
-    local t = Instance.new("TextLabel", f)
-    t.Size = UDim2.new(1, 0, 0, 40)
-    t.Position = UDim2.new(0, 0, 0, 10)
-    t.BackgroundTransparency = 1
-    t.Text = "W424HUB HUB"
-    t.TextColor3 = Color3.fromRGB(0, 200, 255)
-    t.Font = Enum.Font.GothamBold
-    t.TextSize = 20
-    local s = Instance.new("TextLabel", f)
-    s.Size = UDim2.new(1, 0, 0, 30)
-    s.Position = UDim2.new(0, 0, 0, 55)
-    s.BackgroundTransparency = 1
-    s.Text = "UI Loaded! Press K to open menu"
-    s.TextColor3 = Color3.fromRGB(200, 200, 200)
-    s.Font = Enum.Font.Gotham
-    s.TextSize = 14
-    local btn = Instance.new("TextButton", f)
-    btn.Size = UDim2.new(0.4, 0, 0, 40)
-    btn.Position = UDim2.new(0.3, 0, 0.4, 0)
-    btn.BackgroundColor3 = Color3.fromRGB(40, 45, 60)
-    btn.Text = "Close"
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 14
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-    btn.MouseButton1Click:Connect(function() sg:Destroy() end)
-    return
-end
-print("✅ W424hub UI loaded")
+print("OK W424hub loaded")
 
 -- ============================================================
 --  GLOBAL VARIABLES
