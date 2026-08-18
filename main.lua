@@ -1,5 +1,9 @@
+-- link ui baru: https://github.com/Footagesus/WindUI
+
+
+
 -- ============================================================
---  W424HUB HUB – FULL VERSION (UI Included, No Key System)
+--  W424HUB HUB â€“ FULL VERSION (UI Included, No Key System)
 -- ============================================================
 print("=== LOADING W424HUB HUB FULL ===")
 
@@ -24,35 +28,133 @@ local PlayerGui=LocalPlayer:WaitForChild("PlayerGui")
 local TargetGui = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or PlayerGui or CoreGui
 
 -- ============================================================
---  W424HUB UI (Kairo from repo)
+--  W424HUB UI (Linoria)
 -- ============================================================
 local Debris = game:GetService("Debris")
-local _ksrc
-local _ok1 = pcall(function() _ksrc = game:HttpGet("https://raw.githubusercontent.com/alllazy450-sketch/W424HUB-UI/main/source.luau") end)
-warn("DEBUG fetch ok="..tostring(_ok1).." len="..(#(_ksrc or "")))
-if not _ok1 or not _ksrc or _ksrc == "" then warn("Kairo fetch failed!") return end
-local _kfn, _kerr = loadstring(_ksrc)
-warn("DEBUG loadstring fn="..tostring(_kfn~=nil))
-if not _kfn then warn("Kairo loadstring: ".._kerr) return end
-local Kairo
-local _ok2 = pcall(function() Kairo = _kfn() end)
-warn("DEBUG Kairo="..tostring(Kairo~=nil))
-if not _ok2 or not Kairo then warn("Kairo init failed!") return end
+local _lsrc
+local _lok = pcall(function() _lsrc = game:HttpGet("https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/Library.lua") end)
+warn("DEBUG fetch ok="..tostring(_lok).." len="..(#(_lsrc or "")))
+if not _lok or not _lsrc or _lsrc == "" then warn("Linoria fetch failed!") return end
+local _lfn, _lerr = loadstring(_lsrc)
+if not _lfn then warn("Linoria loadstring: "..tostring(_lerr)) return end
+local Library
+local _lok2 = pcall(function() Library = _lfn() end)
+warn("DEBUG Library="..tostring(Library~=nil))
+if not _lok2 or not Library then warn("Linoria init failed!") return end
 
-local Window = Kairo:CreateWindow({
-    Title = "W424HUB",
-    Theme = "Ocean",
-    Size = UDim2.fromOffset(500, 480),
-    Center = true,
-    Draggable = true,
-    Badges = {"v1.0"},
-    MinimizeKey = Enum.KeyCode.K,
-    MinimizeButton = true
-})
-warn("DEBUG Window="..tostring(Window~=nil))
-if not Window then warn("Window failed!") return end
+-- Ocean theme
+Library.AccentColor     = Color3.fromRGB(0, 130, 200)
+Library.MainColor       = Color3.fromRGB(15, 25, 42)
+Library.BackgroundColor = Color3.fromRGB(10, 18, 30)
+Library.OutlineColor    = Color3.fromRGB(40, 60, 90)
+Library.FontColor       = Color3.fromRGB(210, 230, 255)
 
-print("OK W424HUB UI loaded")
+local LinWindow = Library:CreateWindow({Title = "W424HUB", Center = true, AutoShow = true})
+
+-- ============================================================
+--  KAIRO COMPATIBILITY SHIM (Linoria backend)
+-- ============================================================
+local _flagIdx = 0
+local function _flag() _flagIdx = _flagIdx + 1 return "f"..tostring(_flagIdx) end
+local _tabBoxes = {} -- tab -> last groupbox
+local _usedBoxNames = {} -- prevent duplicate groupbox names
+
+-- Window shim object
+local Window = {}
+setmetatable(Window, {__index = Window})
+
+function Window:CreateTab(name)
+    local tab = LinWindow:AddTab(name)
+    _tabBoxes[tab] = {tab=tab, left=nil, right=nil}
+    return tab
+end
+
+local function getBox(tab, title)
+    if not _tabBoxes[tab] then _tabBoxes[tab] = {tab=tab, left=nil, right=nil} end
+    local t = _tabBoxes[tab]
+    -- Create new left groupbox for each section
+    local bname = (title or "Section")
+    if not t.boxes then t.boxes = {} end
+    if not t.boxes[bname] then
+        t.boxes[bname] = tab:AddLeftGroupbox(bname)
+    end
+    t.lastBox = t.boxes[bname]
+    return t.lastBox
+end
+
+function Window:AddCollapsible(tab, title, open)
+    return getBox(tab, title)
+end
+
+function Window:AddDivider(tab, title)
+    return getBox(tab, title)
+end
+
+function Window:AddParagraph(tab, title, text)
+    local box = getBox(tab, title)
+    box:AddLabel(text or title)
+    return {Text = text}
+end
+
+function Window:AddToggle(section, title, desc, default, fn)
+    if not section or not section.AddToggle then return end
+    section:AddToggle(_flag(), {
+        Text = title or "",
+        Default = default or false,
+        Callback = fn or function() end
+    })
+end
+
+function Window:AddButton(section, title, desc, icon, fn)
+    if not section or not section.AddButton then return end
+    section:AddButton({Text = title or "", Func = fn or function() end})
+end
+
+function Window:AddSlider(section, title, desc, min, max, default, fn)
+    if not section or not section.AddSlider then return end
+    section:AddSlider(_flag(), {
+        Text = title or "",
+        Min = min or 0,
+        Max = max or 100,
+        Default = default or 0,
+        Rounding = 0,
+        Callback = fn or function() end
+    })
+end
+
+function Window:AddDropdown(section, title, desc, options, multi, default, fn)
+    if not section or not section.AddDropdown then return end
+    section:AddDropdown(_flag(), {
+        Text = title or "",
+        Values = options or {},
+        Default = 1,
+        Multi = multi or false,
+        Callback = fn or function() end
+    })
+end
+
+function Window:AddInput(section, title, desc, placeholder, fn)
+    if not section or not section.AddInput then return end
+    section:AddInput(_flag(), {
+        Text = title or "",
+        Default = placeholder or "",
+        Numeric = false,
+        Finished = false,
+        Callback = fn or function() end
+    })
+end
+
+function Window:Notify(t)
+    if type(t) == "table" then
+        Library:Notify({
+            Title = t.Title or "W424HUB",
+            Content = t.Description or t.Content or "",
+            Duration = t.Duration or 3,
+        })
+    end
+end
+
+print("OK W424HUB Linoria loaded")
 
 -- ============================================================
 --  UI WINDOW
@@ -71,7 +173,7 @@ local TabSettings = Window:CreateTab("Settings")
 -- ===== TAB INFO =====
 local SecNotice = TabInfo
 Window:AddDivider(TabInfo, "Informasi & Rules")
--- Paragraph: ⚠️ DILARANG DIPERJUALBELIKAN! - 
+-- Paragraph: âš ï¸ DILARANG DIPERJUALBELIKAN! - 
 local SecCommunity = TabInfo
 Window:AddDivider(TabInfo, "Komunitas & Support")
 -- Paragraph: Official Discord Community - 
@@ -112,19 +214,13 @@ Window:AddToggle(DefenseSection, "Enable Auto Parry", "", false, function(v)
             Icon = "Shield",
             Duration = 3})
     end)
-DefenseSection:CreateInput({
-    Name = "Parry Range (studs)",
-    Placeholder = "12",
-    Default = tostring(ParryDistance),
-    Desc = "Jarak deteksi studs untuk Auto Parry.",
-    Callback = function(v)
-        local num = tonumber(v)
-        if num then
-            ParryDistance = math.clamp(num, 1, 50)
-            UpdateParryRing()
-        end
+Window:AddInput(getBox(TabAuto, "Auto Defense & Parry"), "Parry Range (studs)", "Jarak deteksi studs untuk Auto Parry.", "12", function(v)
+    local num = tonumber(v)
+    if num then
+        ParryDistance = math.clamp(num, 1, 50)
+        UpdateParryRing()
     end
-})
+end)
 Window:AddToggle(DefenseSection, "Remove Parry Circle", "", false, function(v)
         RemoveParryCircle = v
         UpdateParryRing()
@@ -147,6 +243,21 @@ Window:AddToggle(SurAutoSection, "Self Heal", "", false, function(v)
             Title = v and "Self Heal Enabled" or "Self Heal Disabled",
             Content = v and "Heal remote diarahkan ke diri sendiri." or "Self Heal dimatikan.",
             Icon = v and "Heart" or "CircleOff",
+            Duration = 3})
+    end)
+
+local FarmSection = TabAuto
+Window:AddDivider(TabAuto, "Auto Farm Bot")
+Window:AddToggle(FarmSection, "Auto Farm Bot", "", false, function(v)
+        AutoFarmBot = v
+        if not v then
+            getgenv().CachedWaypoints = nil
+            getgenv().AIFinalTarget = nil
+        end
+        Window:Notify({
+            Title = v and "Auto Farm Enabled" or "Auto Farm Disabled",
+            Content = v and "Bot aktif: repair gen, heal, evade killer." or "Auto Farm dimatikan.",
+            Icon = v and "Bot" or "CircleOff",
             Duration = 3})
     end)
 
@@ -183,8 +294,14 @@ Window:AddToggle(MoreSec, "Silent Actions (Anti-Noise)", "", false, function(v) 
 Window:AddToggle(MoreSec, "Anti Fall Slow", "", false, function(v) AntiFallDamage = v end)
 Window:AddToggle(MoreSec, "Anti Aura (No Detect)", "", false, function(v) getgenv().AntiAura = v end)
 Window:AddToggle(MoreSec, "Notify Killer Stun", "", false, function(v) NotifyStun = v end)
+Window:AddToggle(MoreSec, "No Slowdown", "", false, function(v) NoSlowdown = v end)
 Window:AddButton(MoreSec, "Force Reset State (Anti-Stuck)", "", nil, function() TriggerAntiStuck() end)
-MoreSec:CreateKeybind({ Name = "Anti-Stuck Hotkey (PC Only)", Desc = "Pilih tombol keyboard untuk memicu Anti-Stuck secara instan.", Default = Enum.KeyCode.L, Callback = function() TriggerAntiStuck() end })
+do
+    local _box = getBox(Tab1, "Survivor Utilities")
+    if _box and _box.AddKeybind then
+        _box:AddKeybind(_flag(), {Text = "Anti-Stuck Hotkey (PC Only)", Default = Enum.KeyCode.L, Callback = function() TriggerAntiStuck() end})
+    end
+end
 
 -- ===== TAB KILLER =====
 local KAdvSec = TabKiller
@@ -203,6 +320,7 @@ Window:AddSlider(KAttackSec, "Attack Range (Studs)", "", 5, 25, 10, function(v) 
 local AimSec = Tab3
 Window:AddDivider(Tab3, "Targeting System")
 Window:AddToggle(AimSec, "Aimbot", "", false, function(v) Aimbot = v; if not v then CachedTarget = nil end end)
+Window:AddToggle(AimSec, "Wall Check (Aimbot/Silent)", "", false, function(v) WallCheck = v end)
 Window:AddToggle(AimSec, "Silent Aim Pistol", "", false, function(v)
         SilentAimPistol = v
         if not v then SilentTarget = nil; ResetScope() end
@@ -296,12 +414,12 @@ Window:AddToggle(OptSec, "Remove All Visual Effects", "", false, function(v)
                     local n = string.lower(effect.Name)
                     if effect:IsA("PostEffect") or effect:IsA("Clouds") or effect:IsA("Atmosphere") or n:find("bloom") or n:find("dof") or n:find("sunray") or n:find("blur") then
                         if effect:IsA("Atmosphere") then
-                            t_insert(getgenv().QUANTUM_HiddenEffects, {Obj = effect, OldParent = effect.Parent)
+                            t_insert(getgenv().QUANTUM_HiddenEffects, {Obj = effect, OldParent = effect.Parent})
                             effect.Parent = nil
                         else
                             pcall(function()
                                 if effect.Enabled then
-                                    t_insert(getgenv().QUANTUM_HiddenEffects, {Obj = effect, WasEnabled = true)
+                                    t_insert(getgenv().QUANTUM_HiddenEffects, {Obj = effect, WasEnabled = true})
                                     effect.Enabled = false
                                 end
                             end)
@@ -427,6 +545,192 @@ Window:AddButton(InterfaceSec, "Unload W424hub HUB", "", nil, function()
             end
         end
     end)
+
+-- ============================================================
+--  VARIABLE INITIALIZATION
+-- ============================================================
+
+-- Lua shorthand aliases
+local t_insert = table.insert
+local t_remove = table.remove
+local m_floor  = math.floor
+local m_round  = math.round or function(n) return math.floor(n + 0.5) end
+local s_format = string.format
+local v3       = Vector3.new
+local cnew     = CFrame.new
+local cangles  = CFrame.Angles
+
+-- Runtime / system flags
+getgenv().QUANTUM_RUNNING     = true
+getgenv().QUANTUM_CONNECTIONS = getgenv().QUANTUM_CONNECTIONS or {}
+
+-- Feature toggles (default off unless set by UI)
+local SpeedBoost         = false
+local BoostSpeed         = 0
+local NoSlowdown         = false
+local SilentActions      = false
+local AntiFallDamage     = false
+local NotifyStun         = false
+local AutoGenerator      = false
+local AutoGeneratorMode  = "Perfect"
+local AutoParry          = false
+local ParryDistance      = 12
+local RemoveParryCircle  = false
+local RemoveWarningMark  = false
+local SelfHeal           = false
+local DoubleDamageGen    = false
+local AutoAttack         = false
+local AttackRange        = 10
+local HitboxExpander     = false
+local HitboxSize         = 15
+local Aimbot             = false
+local SilentAimPistol    = false
+local AimRadius          = 55
+local ShowFOVCircle      = false
+local CustomCameraFOV    = false
+local CameraFOVValue     = 100
+local AntiLogger         = true
+local AutoFarmBot        = false
+local WallCheck          = false
+local SilentAimFOV       = 250
+local AimDistance        = 500
+
+-- ESP flags
+local ESP_Enable          = false
+local ESP_Survivor_Name   = true
+local ESP_Survivor_Highlight = true
+local ESP_Killer_Name     = true
+local ESP_Killer_Highlight = true
+local ESP_SCP             = true
+local ESP_Generator       = true
+local ESP_Pallet          = true
+local ESP_Gate            = true
+local ESP_Hook            = true
+
+-- ESP color palette
+local ESP_COLORS = {
+    Killer    = Color3.fromRGB(255, 50,  50),
+    Survivor  = Color3.fromRGB(80,  200, 255),
+    Generator = Color3.fromRGB(255, 220, 50),
+    Gate      = Color3.fromRGB(50,  255, 100),
+    Hook      = Color3.fromRGB(200, 80,  255),
+    Pallet    = Color3.fromRGB(255, 160, 30),
+}
+local GEN_COLOR_MID = Color3.fromRGB(255, 200, 30)
+local GEN_COLOR_END = Color3.fromRGB(50,  255, 80)
+
+-- Killer mask name map
+local MaskNames = {
+    Trapper       = "TRAPPER",    Wraith       = "WRAITH",
+    Hillbilly     = "HILLBILLY",  Nurse        = "NURSE",
+    Shape         = "SHAPE",      Hag          = "HAG",
+    Doctor        = "DOCTOR",     Huntress     = "HUNTRESS",
+    Cannibal      = "CANNIBAL",   Nightmare    = "NIGHTMARE",
+    Pig           = "PIG",        Clown        = "CLOWN",
+    Spirit        = "SPIRIT",     Legion       = "LEGION",
+    Plague        = "PLAGUE",     GhostFace    = "GHOSTFACE",
+    Demogorgon    = "DEMOGORGON", Oni          = "ONI",
+    Deathslinger  = "DEATH",      Executioner  = "PYRAMID",
+    Blight        = "BLIGHT",     Twins        = "TWINS",
+    Trickster     = "TRICKSTER",  Nemesis      = "NEMESIS",
+    Cenobite      = "CENOBITE",   Artist       = "ARTIST",
+    Onryo         = "ONRYO",      Dredge       = "DREDGE",
+    Mastermind    = "MASTER",     Knight       = "KNIGHT",
+    Skull         = "SKULL",      Singularity  = "SINGULAR",
+    Xenomorph     = "XENO",       Chucky       = "CHUCKY",
+    Unknown       = "UNKNOWN",    Lich         = "LICH",
+    Dark          = "DARK",
+}
+
+-- Killer profiles for Auto Parry
+local KillerProfiles = {
+    Trapper = {BonusDist=1, Delay=0}, Wraith = {BonusDist=2, Delay=0},
+    Hillbilly = {BonusDist=2, Delay=0}, Nurse = {BonusDist=0, Delay=0},
+    Shape = {BonusDist=1, Delay=0}, Hag = {BonusDist=1, Delay=0},
+    Doctor = {BonusDist=1, Delay=0}, Huntress = {BonusDist=3, Delay=0.05},
+    Cannibal = {BonusDist=2, Delay=0}, Nightmare = {BonusDist=1, Delay=0},
+    Blight = {BonusDist=2, Delay=0}, Trickster = {BonusDist=3, Delay=0.05},
+}
+local IgnoreSkills = {"IsPhasing","IsBlinking","IsTeleporting","IsCharging","IsCloaked","IsWraith"}
+
+-- Map object cache
+local CachedMapObjects = {Generators = {}, Pallets = {}, Hooks = {}, Gates = {}}
+local ActiveGenerators = {}
+local PrevESPState = {Generator = false, Pallet = false, Gate = false, Hook = false}
+local ESP_PlayerCache = {}
+
+-- SCP ESP
+local SCPCache = {}
+local SCPFolder = Instance.new("Folder")
+SCPFolder.Name = "SCPESP_Folder"
+SCPFolder.Parent = workspace
+local SCPConnection = nil
+
+-- Crosshair images
+local CrosshairImages = {
+    Dot    = "rbxassetid://6765464380",
+    Scope  = "rbxassetid://6765464578",
+    Circle = "rbxassetid://6765464500",
+    Plus   = "rbxassetid://6765464644",
+    Cross  = "rbxassetid://6765464700",
+}
+
+-- Parry / combat state
+local ExactParryRemote = nil
+local LastParryTick    = 0
+local ParryRing        = nil
+
+-- Aimbot / targeting state
+local CachedTarget      = nil
+local FOVCircle         = nil
+local SilentTarget      = nil
+local TargetPartCache   = {}
+local cachedRayFilter   = {}
+local aimRayParams      = RaycastParams.new()
+aimRayParams.FilterType = Enum.RaycastFilterType.Exclude
+
+-- Generator automation state
+local GenConnection    = nil
+local HeartbeatConnections = {}
+local LastGoalRotation = 0
+local LastSkillHit     = 0
+local LastTriggerTick  = 0
+
+-- Anti-stuck / movement
+local TriggerAntiStuck = function() end -- defined later; forward reference
+local ForceUnstuck     = function() end -- defined later
+local lastAttackStrike = 0
+
+-- Remote caches
+local CachedHealEvent      = nil
+local SearchHealRemote     = false
+local CachedBasicAttack    = nil
+local SearchedAttackRemote = false
+local CachedHBRemotes      = {DisplayBlood = nil, FallDamage = nil, HealEvent = nil}
+local SearchedHBRemotes    = false
+
+-- Camera / FPP
+local isFPP        = false
+local fppHideConn  = nil
+local MobileRotateBtn = nil
+
+-- Mobile detection
+local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+
+-- ESP timing
+local LastESPRefresh = 0
+local closestKillerDist = 999
+
+-- Moonwalk state
+local cachedHum          = nil
+local MoonwalkUI         = nil
+local CurrentMoonwalkYaw  = 0
+local CurrentMoonwalkSway = 0
+
+-- Indicator / warning GUI
+local IndicatorGui    = nil
+local CrosshairGui    = nil
+local MainWindowScreen = nil
 
 -- ============================================================
 --  CORE FUNCTIONS (Dari W424hub Hub Original)
@@ -657,7 +961,7 @@ local function CreatePlayerESP(player,isKiller)
         return
     end
     local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return
+    if not myRoot then return end
     local dist = m_floor((root.Position - myRoot.Position).Magnitude)
     local color = isKiller and ESP_COLORS.Killer or ESP_COLORS.Survivor
     local statusText = ""
@@ -1011,8 +1315,6 @@ local function RefreshESP()
     end
 end
 
-local cachedRayFilter = {}
-
 local function IsVisible(targetPart)
     if not WallCheck then return true end
     local cam = workspace.CurrentCamera
@@ -1122,7 +1424,7 @@ local function GetClosestPlayer(currentTarget)
     return CachedTarget
 end
 
-local function ForceUnstuck()
+ForceUnstuck = function()
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     local root = char and char:FindFirstChild("HumanoidRootPart")
@@ -1244,7 +1546,7 @@ task.spawn(function()
     end
 end)
 
-local function TriggerAntiStuck()
+TriggerAntiStuck = function()
     pcall(function()
         local char = workspace:FindFirstChild(LocalPlayer.Name) or LocalPlayer.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -2149,9 +2451,9 @@ end))
 -- ============================================================
 Window:Notify({
     Title = "Welcome to W424hub HUB!",
-    Description = "God-AI Systems Initialized.\n💻 PC User: Press [Keybind K] to open/hide the UI.",
+    Description = "God-AI Systems Initialized.\nðŸ’» PC User: Press [Keybind K] to open/hide the UI.",
     Duration = 8,
     Icon = "Sparkles"
 })
 
-print("✅ W424hub HUB Full Loaded!")
+print("âœ… W424hub HUB Full Loaded!")
