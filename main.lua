@@ -31,55 +31,90 @@ local TargetGui = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") o
 --  W424HUB UI (Linoria)
 -- ============================================================
 local Debris = game:GetService("Debris")
+
+-- KICAU KICAU, KICAU MANIAAAðŸ¤‘
+local Library = nil
+local LinWindow = nil
+local _usingLinoria = false
+
 local _lsrc
 local _lok = pcall(function() _lsrc = game:HttpGet("https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/Library.lua") end)
-warn("DEBUG fetch ok="..tostring(_lok).." len="..(#(_lsrc or "")))
-if not _lok or not _lsrc or _lsrc == "" then warn("Linoria fetch failed!") return end
-local _lfn, _lerr = loadstring(_lsrc)
-if not _lfn then warn("Linoria loadstring: "..tostring(_lerr)) return end
-local Library
-local _lok2 = pcall(function() Library = _lfn() end)
-warn("DEBUG Library="..tostring(Library~=nil))
-if not _lok2 or not Library then warn("Linoria init failed!") return end
-
--- Ocean theme
-Library.AccentColor     = Color3.fromRGB(0, 130, 200)
-Library.MainColor       = Color3.fromRGB(15, 25, 42)
-Library.BackgroundColor = Color3.fromRGB(10, 18, 30)
-Library.OutlineColor    = Color3.fromRGB(40, 60, 90)
-Library.FontColor       = Color3.fromRGB(210, 230, 255)
-
-local LinWindow = Library:CreateWindow({Title = "W424HUB", Center = true, AutoShow = true})
+if _lok and _lsrc and #_lsrc > 100 then
+    local _lfn, _lerr = loadstring(_lsrc)
+    if _lfn then
+        local _lok2, _lib = pcall(_lfn)
+        if _lok2 and _lib then
+            Library = _lib
+            _usingLinoria = true
+            -- Ocean theme
+            Library.AccentColor     = Color3.fromRGB(0, 130, 200)
+            Library.MainColor       = Color3.fromRGB(15, 25, 42)
+            Library.BackgroundColor = Color3.fromRGB(10, 18, 30)
+            Library.OutlineColor    = Color3.fromRGB(40, 60, 90)
+            Library.FontColor       = Color3.fromRGB(210, 230, 255)
+            LinWindow = Library:CreateWindow({Title = "W424HUB", Center = true, AutoShow = true})
+            print("[W424HUB] Linoria UI loaded OK")
+        else
+            warn("[W424HUB] Linoria init failed, using NoUI mode")
+        end
+    else
+        warn("[W424HUB] Linoria loadstring failed, using NoUI mode")
+    end
+else
+    warn("[W424HUB] Linoria fetch failed (executor tidak support HttpGet), using NoUI mode")
+end
 
 -- ============================================================
---  KAIRO COMPATIBILITY SHIM (Linoria backend)
+--  KAIRO COMPATIBILITY SHIM (Linoria backend + NoUI fallback)
 -- ============================================================
 local _flagIdx = 0
 local function _flag() _flagIdx = _flagIdx + 1 return "f"..tostring(_flagIdx) end
-local _tabBoxes = {} -- tab -> last groupbox
-local _usedBoxNames = {} -- prevent duplicate groupbox names
+local _tabBoxes = {} -- tab -> {boxes={}, lastBox=nil}
+
+-- Sentinel tab/box untuk NoUI mode â€” objek dummy agar tidak ada nil crash
+local _DUMMY = setmetatable({}, {
+    __index = function(_, k)
+        return function(...) return _DUMMY end
+    end,
+    __newindex = function() end,
+})
 
 -- Window shim object
 local Window = {}
 setmetatable(Window, {__index = Window})
 
 function Window:CreateTab(name)
-    local tab = LinWindow:AddTab(name)
-    _tabBoxes[tab] = {tab=tab, left=nil, right=nil}
+    if not _usingLinoria or not LinWindow then return _DUMMY end
+    local ok, tab = pcall(function() return LinWindow:AddTab(name) end)
+    if not ok or not tab then return _DUMMY end
+    _tabBoxes[tab] = {boxes={}, lastBox=nil}
     return tab
 end
 
 local function getBox(tab, title)
-    if not _tabBoxes[tab] then _tabBoxes[tab] = {tab=tab, left=nil, right=nil} end
+    if tab == _DUMMY then return _DUMMY end
+    if not _tabBoxes[tab] then _tabBoxes[tab] = {boxes={}, lastBox=nil} end
     local t = _tabBoxes[tab]
-    -- Create new left groupbox for each section
-    local bname = (title or "Section")
-    if not t.boxes then t.boxes = {} end
+    local bname = title or "Section"
     if not t.boxes[bname] then
-        t.boxes[bname] = tab:AddLeftGroupbox(bname)
+        local ok, box = pcall(function() return tab:AddLeftGroupbox(bname) end)
+        t.boxes[bname] = (ok and box) or _DUMMY
     end
     t.lastBox = t.boxes[bname]
     return t.lastBox
+end
+
+
+local function resolveBox(section)
+    if not section or section == _DUMMY then return _DUMMY end
+
+    local mt = getmetatable(section)
+    local isLinoriaBox = mt == nil and type(rawget(section, "AddToggle")) == "function"
+    if isLinoriaBox then return section end
+    -- Cek via _tabBoxes
+    local t = _tabBoxes[section]
+    if t and t.lastBox then return t.lastBox end
+    return _DUMMY
 end
 
 function Window:AddCollapsible(tab, title, open)
@@ -92,69 +127,86 @@ end
 
 function Window:AddParagraph(tab, title, text)
     local box = getBox(tab, title)
-    box:AddLabel(text or title)
+    if box ~= _DUMMY then pcall(function() box:AddLabel(text or title) end) end
     return {Text = text}
 end
 
 function Window:AddToggle(section, title, desc, default, fn)
-    if not section or not section.AddToggle then return end
-    section:AddToggle(_flag(), {
-        Text = title or "",
-        Default = default or false,
-        Callback = fn or function() end
-    })
+    local box = resolveBox(section)
+    if box == _DUMMY then return end
+    pcall(function()
+        box:AddToggle(_flag(), {
+            Text = title or "",
+            Default = default or false,
+            Callback = fn or function() end
+        })
+    end)
 end
 
 function Window:AddButton(section, title, desc, icon, fn)
-    if not section or not section.AddButton then return end
-    section:AddButton({Text = title or "", Func = fn or function() end})
+    local box = resolveBox(section)
+    if box == _DUMMY then return end
+    pcall(function()
+        box:AddButton({Text = title or "", Func = fn or function() end})
+    end)
 end
 
 function Window:AddSlider(section, title, desc, min, max, default, fn)
-    if not section or not section.AddSlider then return end
-    section:AddSlider(_flag(), {
-        Text = title or "",
-        Min = min or 0,
-        Max = max or 100,
-        Default = default or 0,
-        Rounding = 0,
-        Callback = fn or function() end
-    })
+    local box = resolveBox(section)
+    if box == _DUMMY then return end
+    pcall(function()
+        box:AddSlider(_flag(), {
+            Text = title or "",
+            Min = min or 0,
+            Max = max or 100,
+            Default = default or 0,
+            Rounding = 0,
+            Callback = fn or function() end
+        })
+    end)
 end
 
 function Window:AddDropdown(section, title, desc, options, multi, default, fn)
-    if not section or not section.AddDropdown then return end
-    section:AddDropdown(_flag(), {
-        Text = title or "",
-        Values = options or {},
-        Default = 1,
-        Multi = multi or false,
-        Callback = fn or function() end
-    })
+    local box = resolveBox(section)
+    if box == _DUMMY then return end
+    pcall(function()
+        box:AddDropdown(_flag(), {
+            Text = title or "",
+            Values = options or {},
+            Default = 1,
+            Multi = multi or false,
+            Callback = fn or function() end
+        })
+    end)
 end
 
 function Window:AddInput(section, title, desc, placeholder, fn)
-    if not section or not section.AddInput then return end
-    section:AddInput(_flag(), {
-        Text = title or "",
-        Default = placeholder or "",
-        Numeric = false,
-        Finished = false,
-        Callback = fn or function() end
-    })
+    local box = resolveBox(section)
+    if box == _DUMMY then return end
+    pcall(function()
+        box:AddInput(_flag(), {
+            Text = title or "",
+            Default = placeholder or "",
+            Numeric = false,
+            Finished = false,
+            Callback = fn or function() end
+        })
+    end)
 end
 
 function Window:Notify(t)
-    if type(t) == "table" then
-        Library:Notify({
-            Title = t.Title or "W424HUB",
-            Content = t.Description or t.Content or "",
-            Duration = t.Duration or 3,
-        })
+    if type(t) == "table" and _usingLinoria and Library and Library.Notify then
+        pcall(function()
+            Library:Notify({
+                Title    = t.Title or "W424HUB",
+                Content  = t.Description or t.Content or "",
+                Duration = t.Duration or 3,
+            })
+        end)
     end
 end
 
-print("OK W424HUB Linoria loaded")
+print("[W424HUB] Shim OK, usingLinoria=" .. tostring(_usingLinoria))
 
 -- ============================================================
 --  UI WINDOW
@@ -1844,6 +1896,7 @@ local function TriggerParryDagger()
 end
 
 local oldNamecall
+local _hookOk = pcall(function()
 oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
     local method = getnamecallmethod()
     if checkcaller() or method ~= "FireServer" or typeof(self) ~= "Instance" then
@@ -1954,6 +2007,11 @@ oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
     end
     return oldNamecall(self, ...)
 end))
+end)
+if not _hookOk then
+    warn("[W424HUB] hookmetamethod tidak tersedia di executor ini â€” SelfHeal/SilentAim/AntiAura dinonaktifkan.")
+    SelfHeal = false; SilentAimPistol = false; AntiFallDamage = false
+end
 
 task.spawn(function()
     while task.wait(0.15) do
